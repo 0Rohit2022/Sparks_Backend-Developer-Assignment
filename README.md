@@ -10,8 +10,14 @@
 npm install
 ```
 
-<p>2. To Run for this project</p>
+<p>2. To Run this project</p>
 
 ```
 yarn run dev
+```
+
+<p>3. To Test this project</p>
+
+```
+Test In POSTMAN(link is available in the routes folder)
 ```
