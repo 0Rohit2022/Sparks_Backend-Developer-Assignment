@@ -1,8 +1,8 @@
 import { Restaurant } from "../models/restaurant.models.js";
 import distanceCalculator from "../utils/distanceCalculator.js";
+import ErrorHandler from "../middleware/error.middleware.js";
 
-
-//Getting restuarants by coordinates and radius
+// Getting restaurants by coordinates and radius
 export const getRestaurantsByCoordinatesAndRadius = async (req, res, next) => {
   try {
     const { latitude, longitude, radius } = req.body;
@@ -20,18 +20,16 @@ export const getRestaurantsByCoordinatesAndRadius = async (req, res, next) => {
         message: restaurants,
       });
     } else {
-      res.status(404).json({
-        success: false,
-        message: "No restaurants found within the specified radius.",
-      });
+      throw new ErrorHandler(
+        "No restaurants found within the specified radius.",501
+      );
     }
   } catch (error) {
-    console.error(error); // Log the error to the console for debugging
     next(error);
   }
 };
 
-//Getting restaurantby distance range
+// Getting restaurants by distance range
 export const getRestaurantsByDistanceRange = async (req, res, next) => {
   try {
     const { latitude, longitude, minDistance, maxDistance } = req.body;
@@ -42,6 +40,7 @@ export const getRestaurantsByDistanceRange = async (req, res, next) => {
         },
       },
     }).sort({ "location.coordinates": 1 }); // Sort by distance from provided coordinates
+
     const filteredRestaurants = restaurants.filter((restaurant) => {
       const distance = distanceCalculator.calculateDistance(
         latitude,
@@ -51,26 +50,21 @@ export const getRestaurantsByDistanceRange = async (req, res, next) => {
       );
       return distance >= minDistance && distance <= maxDistance;
     });
-     res.status(201).json({
-       success: true,
-       message: filteredRestaurants,
-     });
+
+    res.status(200).json({
+      success: true,
+      message: filteredRestaurants,
+    });
   } catch (error) {
     next(error);
   }
 };
 
-
-//Add restaurant
+// Add restaurant
 export const addRestaurant = async (req, res, next) => {
-  //Get the data from the frontend
-  //create inside the database
-  //return the response
-
   try {
     const { name, description, location, ratings } = req.body;
-
-    await Restaurant.create({
+    const restaurant = await Restaurant.create({
       name,
       description,
       location,
@@ -80,98 +74,78 @@ export const addRestaurant = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: "Restaurant Added Successfully",
+      restaurant,
     });
   } catch (error) {
     next(error);
   }
 };
 
-
-//Get restaurant by id
+// Get restaurant by id
 export const getRestaurantById = async (req, res, next) => {
   try {
     const restaurant = await Restaurant.findById(req.params.id);
     if (!restaurant) {
-      return res.status(404).json({
-        success: false,
-        message: "Restaurant not found",
-      });
+      throw new ErrorHandler("Restaurant not found",401);
     }
     res.status(200).json({
       success: true,
       message: "Restaurant retrieved successfully",
-      restaurant: restaurant,
+      restaurant,
     });
   } catch (error) {
-    console.error(error);
     next(error);
   }
 };
 
-
-//Get All Restaurants
+// Get all restaurants
 export const getAllRestaurants = async (req, res, next) => {
   try {
     const restaurants = await Restaurant.find();
     res.status(200).json({
       success: true,
       message: "All restaurants retrieved successfully",
-      restaurants: restaurants,
+      restaurants,
     });
   } catch (error) {
-    console.error(error);
     next(error);
   }
 };
 
-//Update Restaurant By Id
+// Update restaurant by id
 export const updateRestaurantById = async (req, res, next) => {
   try {
     const { name, description, location, ratings } = req.body;
-
     const updatedRestaurant = await Restaurant.findByIdAndUpdate(
       req.params.id,
       { name, description, location, ratings },
       { new: true }
     );
-
     if (!updatedRestaurant) {
-      return res.status(404).json({
-        success: false,
-        message: "Restaurant not found",
-      });
+      throw new ErrorHandler("Restaurant not found", 401);
     }
-
     res.status(200).json({
       success: true,
       message: "Restaurant updated successfully",
       restaurant: updatedRestaurant,
     });
   } catch (error) {
-    console.error(error);
     next(error);
   }
 };
 
-
-//Delete Restaurant By Id
+// Delete restaurant by id
 export const deleteRestaurantById = async (req, res, next) => {
   try {
     const deletedRestaurant = await Restaurant.findByIdAndDelete(req.params.id);
-
     if (!deletedRestaurant) {
-      return res.status(404).json({
-        success: false,
-        message: "Restaurant not found",
-      });
+      throw new ErrorHandler("Restaurant not found" , 401);
     }
-
     res.status(200).json({
       success: true,
       message: "Restaurant deleted successfully",
     });
   } catch (error) {
-    console.error(error);
     next(error);
   }
 };
